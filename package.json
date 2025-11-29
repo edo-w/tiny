@@ -1,0 +1,58 @@
+{
+  "name": "@edo-w/tiny",
+  "version": "0.0.0",
+  "description": "Tiny is a typescript dependency injection library for building maintainable applications.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/edo-w/tiny.git"
+  },
+  "author": "https://github.com/juanka881",
+  "license": "Apache-2.0",
+  "keywords": [
+    "di",
+    "dependency injection",
+    "typescript",
+    "ioc",
+    "inversion of control"
+  ],
+  "type": "module",
+  "main": "dist/src/index.js",
+  "exports": {
+    ".": "./dist/src/index.js",
+    "./*": "./dist/src/*"
+  },
+  "files": [
+    "./dist/src/*"
+  ],
+  "scripts": {
+    "clean": "rimraf ./dist",
+    "build": "tsc && tsc-alias",
+    "test": "vitest",
+    "cover": "vitest run --coverage",
+    "coverv": "start dist/.coverage/index.html",
+    "lint": "eslint  --cache --cache-location ./dist .",
+    "dev": "f [dev:*]",
+    "watch:build": "tsc --watch",
+    "watch:alias": "tsc-alias --watch"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.29.7",
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
+    "@edo-w/devconfig": "^0.8.0",
+    "@vitest/coverage-v8": "^4.0.12",
+    "eslint": "^9.39.1",
+    "frunk": "^0.0.4",
+    "lefthook": "^2.0.4",
+    "lint-staged": "^16.2.7",
+    "rimraf": "^6.1.2",
+    "tsc-alias": "^1.8.16",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.12"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix"
+    ]
+  }
+}

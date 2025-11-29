@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "@edo-w/devconfig/node/tsconfig.json",
+  "compilerOptions": {
+    /* project */
+	"paths": {
+		"~/*": ["./src/*"]
+	},
+	"rootDir": ".",
+	"outDir": "./dist",
+  },
+  "include": [
+	"src",
+	"test"
+  ],
+  "exclude": ["node_modules"]
+}
