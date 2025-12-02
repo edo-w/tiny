@@ -1,5 +1,6 @@
 import { assert, suite, test } from 'vitest';
 import { createKey, inject, Tiny } from '~/index.js';
+import { TinyModule } from '~/module.js';
 
 suite('tiny', () => {
 	test('can create instance', () => {
@@ -353,6 +354,80 @@ suite('#addFactory', () => {
 
 		assert.strictEqual(repo1.name, 'repo1');
 		assert.strictEqual(repo3.name, 'repo2');
+	});
+});
+
+suite('#addModule', () => {
+	class MyRepo {
+		print(): string {
+			return 'hello';
+		}
+	}
+
+	class MyLogger {
+		log(message: string): string {
+			return `LOG: ${message}`;
+		}
+	}
+
+	class UserService {
+		constructor(
+			public repo: MyRepo,
+			public logger: MyLogger,
+		) {}
+	}
+
+	test('can create empty module', () => {
+		class MyModule extends TinyModule {
+			config() { }
+		}
+
+		const mod = new MyModule();
+		const builders = mod.getBuilders();
+
+		assert.ok(mod);
+		assert.strictEqual(builders.length, 0);
+	});
+
+	test('can add components to module', () => {
+		class MyModule extends TinyModule {
+			config() {
+				this.addInstance(MyRepo, new MyRepo());
+				this.addClass(MyLogger);
+				this.addFactory(UserService, (t) => {
+					return new UserService(t.get(MyRepo), t.get(MyLogger));
+				});
+			}
+		}
+
+		const mod = new MyModule();
+		const builders = mod.getBuilders();
+
+		assert.ok(mod);
+		assert.strictEqual(builders.length, 3);
+	});
+
+	test('can add components to module and resolve its components', () => {
+		class MyModule extends TinyModule {
+			override config() {
+				this.addInstance(MyRepo, new MyRepo());
+				this.addClass(MyLogger);
+				this.addFactory(UserService, (t) => {
+					return new UserService(t.get(MyRepo), t.get(MyLogger));
+				});
+			}
+		}
+
+		const tiny = new Tiny();
+		tiny.addModule(new MyModule());
+
+		const repo = tiny.get(MyRepo);
+		const logger = tiny.get(MyLogger);
+		const service = tiny.get(UserService);
+
+		assert.isTrue(repo instanceof MyRepo);
+		assert.isTrue(logger instanceof MyLogger);
+		assert.isTrue(service instanceof UserService);
 	});
 });
 

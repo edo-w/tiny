@@ -22,7 +22,7 @@ export class InstanceBuilder<TComponent> implements RegistrationBuilder {
 	build(): Registration[] {
 		const id = getNextRegistrationId();
 		const registerKey = unwrapKey(this.key);
-		const lifetime = 'singleton';
+		const lifetime: Lifetime = 'transient';
 		const instance = this.instance;
 		const factory: FactoryFn<TComponent> = () => {
 			return instance;

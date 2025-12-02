@@ -1,5 +1,6 @@
 import { ClassBuilder, FactoryBuilder, InstanceBuilder } from './builders.js';
 import { popTinyStack, pushTinyStack } from './class-inject.js';
+import { TinyModule } from './module.js';
 import { Registry } from './registry.js';
 import {
 	ClassArgs,
@@ -128,6 +129,14 @@ export class Tiny {
 
 		this.addBuilder(builder);
 		return builder;
+	}
+
+	addModule(module: TinyModule): void {
+		this.ensureBuilders();
+
+		const builders = this.ensureBuilders();
+		const moduleBuilders = module.getBuilders();
+		builders.push(...moduleBuilders);
 	}
 
 	has<TComponent>(key: ResolveKey<TComponent>): boolean {
