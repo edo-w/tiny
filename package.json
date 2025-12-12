@@ -33,7 +33,8 @@
     "lint": "eslint  --cache --cache-location ./dist .",
     "dev": "f [dev:*]",
     "watch:build": "tsc --watch",
-    "watch:alias": "tsc-alias --watch"
+    "watch:alias": "tsc-alias --watch",
+	"release": "pnpm build && pnpm test run && changeset publish"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.7",
@@ -47,6 +48,7 @@
     "lint-staged": "^16.2.7",
     "rimraf": "^6.1.2",
     "tsc-alias": "^1.8.16",
+    "typedoc": "^0.28.14",
     "typescript": "^5.9.3",
     "vitest": "^4.0.12"
   },
@@ -54,5 +56,8 @@
     "*.{ts,tsx,js,jsx}": [
       "eslint --fix"
     ]
+  },
+  "dependencies": {
+    "@edo-w/xer": "^0.1.0"
   }
 }
