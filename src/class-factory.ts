@@ -1,3 +1,4 @@
+import { ClassArgsNotFoundError } from './errors.js';
 import { ClassType, ResolveKey, TinyContext } from './types.js';
 
 export class ClassFactory {
@@ -19,7 +20,8 @@ export class ClassFactory {
 			return new this.classType(...components);
 		}
 
-		// TODO: create propert error
-		throw new Error(`Cannot resolve dependencies for class ${this.classType.name}. Arguments are required.`);
+		const className = this.classType.name ?? '[unknown]';
+		throw new ClassArgsNotFoundError(`Class "${className}" constructor arguments not found.`)
+			.setProperties({ key: this.classType, class: className });
 	}
 }

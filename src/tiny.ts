@@ -1,5 +1,6 @@
 import { ClassBuilder, FactoryBuilder, InstanceBuilder } from './builders.js';
 import { popTinyStack, pushTinyStack } from './class-inject.js';
+import { ComponentNotFoundError, InvalidComponentError, ResolveFailedError } from './errors.js';
 import { TinyModule } from './module.js';
 import { Registry } from './registry.js';
 import {
@@ -151,33 +152,34 @@ export class Tiny {
 		}
 
 		let pushed = false;
+		let component: TComponent | undefined = undefined;
 		try {
 			pushed = pushTinyStack(this);
 
 			switch (registration.lifetime) {
 				case 'singleton': {
-					let component = this.root.getCache(registration.id);
+					component = this.root.getCache(registration.id);
 					if (!component) {
 						component = registration.factory(this);
 						this.root.setCache(registration.id, component);
 					}
 
-					return component;
+					break;
 				}
 
 				case 'scoped': {
-					let component = this.getCache(registration.id);
+					component = this.getCache(registration.id);
 					if (!component) {
 						component = registration.factory(this);
 						this.setCache(registration.id, component);
 					}
 
-					return component;
+					break;
 				}
 
 				case 'transient': {
-					const component = registration.factory(this);
-					return component;
+					component = registration.factory(this);
+					break;
 				}
 
 				/* v8 ignore next -- @preserve */
@@ -185,6 +187,18 @@ export class Tiny {
 					throw new Error(`Unknown lifetime: ${registration.lifetime}`);
 				}
 			}
+
+			if (component === undefined) {
+				throw new InvalidComponentError('Invalid component returned from factory. Component is undefined.')
+					.setProperties({ key, registrationId: registration.id });
+			}
+
+			return component;
+		}
+		catch (error) {
+			throw new ResolveFailedError('Resolve component failed.')
+				.setProperties({ key })
+				.setCause(error);
 		}
 		finally {
 			if (pushed) {
@@ -196,8 +210,8 @@ export class Tiny {
 	get<TComponent>(key: ResolveKey<TComponent>): TComponent {
 		const component = this.safeGet<TComponent>(key);
 		if (!component) {
-			// TODO create proper error type
-			throw new Error(`Failed to resolve component for key.`);
+			throw new ComponentNotFoundError(`Component key "${key}" not found.`)
+				.setProperties({ key });
 		}
 
 		return component;
