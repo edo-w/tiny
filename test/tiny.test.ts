@@ -389,27 +389,24 @@ suite('#addModule', () => {
 		assert.strictEqual(builders.length, 0);
 	});
 
-	test('can add components to module', () => {
-		class MyModule extends TinyModule {
-			config() {
-				this.addInstance(MyRepo, new MyRepo());
-				this.addClass(MyLogger);
-				this.addFactory(UserService, (t) => {
-					return new UserService(t.get(MyRepo), t.get(MyLogger));
-				});
-			}
-		}
+	test('can add components to module and resolve its components', () => {
+		const mod = new TinyModule();
+		mod.addInstance(MyRepo, new MyRepo());
+		mod.addClass(MyLogger);
+		mod.addFactory(UserService, (t) => {
+			return new UserService(t.get(MyRepo), t.get(MyLogger));
+		});
 
-		const mod = new MyModule();
 		const builders = mod.getBuilders();
 
 		assert.ok(mod);
 		assert.strictEqual(builders.length, 3);
 	});
 
-	test('can add components to module and resolve its components', () => {
+	test('can add components to derived module and resolve its components', () => {
 		class MyModule extends TinyModule {
-			override config() {
+			constructor() {
+				super();
 				this.addInstance(MyRepo, new MyRepo());
 				this.addClass(MyLogger);
 				this.addFactory(UserService, (t) => {
