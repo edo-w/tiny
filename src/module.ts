@@ -1,12 +1,17 @@
 import { ClassBuilder, FactoryBuilder, InstanceBuilder } from './builders.js';
 import {
-	ClassArgs,
+	ClassParameters,
 	ClassType,
 	FactoryFn,
 	RegistrationBuilder,
 	ResolveKey,
 } from './types.js';
 
+/**
+ * Reusable registration bundle.
+ *
+ * Modules collect builders that can later be applied to a `Tiny` container.
+ */
 export class TinyModule {
 	private builders: RegistrationBuilder[];
 
@@ -14,24 +19,79 @@ export class TinyModule {
 		this.builders = [];
 	}
 
+	/**
+	 * Adds an existing instance registration to the module.
+	 */
 	addInstance<TComponent>(key: ResolveKey<TComponent>, component: TComponent): InstanceBuilder<TComponent> {
 		const builder = new InstanceBuilder(key, component);
 		this.builders.push(builder);
+
 		return builder;
 	}
 
-	addClass<TComponent extends ClassType<any>>(classType: TComponent, args?: ClassArgs<TComponent>): ClassBuilder<TComponent> {
-		const builder = new ClassBuilder(classType, args);
+	/**
+	 * Adds a class registration to the module.
+	 */
+	addClass<TComponent extends ClassType<any>>(classType: TComponent, params: ClassParameters<TComponent>): ClassBuilder<TComponent> {
+		const builder = new ClassBuilder(classType, params);
 		this.builders.push(builder);
+
 		return builder;
 	}
 
+	/**
+	 * Adds a factory registration to the module.
+	 */
 	addFactory<TComponent>(key: ResolveKey<TComponent>, fn: FactoryFn<TComponent>): FactoryBuilder<TComponent> {
 		const builder = new FactoryBuilder(fn).as(key);
 		this.builders.push(builder);
+
 		return builder;
 	}
 
+	/**
+	 * Adds a singleton class registration to the module.
+	 */
+	addSingletonClass<TComponent extends ClassType<any>>(classType: TComponent, params: ClassParameters<TComponent>): ClassBuilder<TComponent> {
+		const builder = new ClassBuilder(classType, params).singleton();
+		this.builders.push(builder);
+
+		return builder;
+	}
+
+	/**
+	 * Adds a singleton factory registration to the module.
+	 */
+	addSingletonFactory<TComponent>(key: ResolveKey<TComponent>, fn: FactoryFn<TComponent>): FactoryBuilder<TComponent> {
+		const builder = new FactoryBuilder(fn).as(key).singleton();
+		this.builders.push(builder);
+
+		return builder;
+	}
+
+	/**
+	 * Adds a scoped class registration to the module.
+	 */
+	addScopedClass<TComponent extends ClassType<any>>(classType: TComponent, params: ClassParameters<TComponent>): ClassBuilder<TComponent> {
+		const builder = new ClassBuilder(classType, params).scoped();
+		this.builders.push(builder);
+
+		return builder;
+	}
+
+	/**
+	 * Adds a scoped factory registration to the module.
+	 */
+	addScopedFactory<TComponent>(key: ResolveKey<TComponent>, fn: FactoryFn<TComponent>): FactoryBuilder<TComponent> {
+		const builder = new FactoryBuilder(fn).as(key).scoped();
+		this.builders.push(builder);
+
+		return builder;
+	}
+
+	/**
+	 * Returns a copy of all collected builders.
+	 */
 	getBuilders(): RegistrationBuilder[] {
 		return this.builders.slice();
 	}

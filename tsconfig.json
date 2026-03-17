@@ -3,9 +3,10 @@
   "extends": "@edo-w/devconfig/node/tsconfig.json",
   "compilerOptions": {
     /* project */
-	"paths": {
-		"~/*": ["./src/*"]
-	},
+  "paths": {
+    "#src/*": ["./src/*"],
+    "#test/*": ["./test/*"]
+  },
 	"rootDir": ".",
 	"outDir": "./dist",
   },

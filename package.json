@@ -17,6 +17,10 @@
   ],
   "type": "module",
   "main": "dist/src/index.js",
+  "imports": {
+    "#src/*": "./dist/src/*",
+    "#test/*": "./dist/test/*"
+  },
   "exports": {
     ".": "./dist/src/index.js",
     "./*": "./dist/src/*"
@@ -27,14 +31,14 @@
   "scripts": {
     "clean": "rimraf ./dist",
     "build": "tsc && tsc-alias",
-    "test": "vitest",
+    "test": "vitest run",
     "cover": "vitest run --coverage",
     "coverv": "start dist/.coverage/index.html",
     "lint": "eslint  --cache --cache-location ./dist .",
     "dev": "f [dev:*]",
     "watch:build": "tsc --watch",
     "watch:alias": "tsc-alias --watch",
-	"release": "pnpm build && pnpm test run && changeset publish"
+    "release": "pnpm build && pnpm test run && changeset publish"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.7",
@@ -58,6 +62,6 @@
     ]
   },
   "dependencies": {
-    "@edo-w/xer": "^0.1.0"
+    "@edo-w/xer": "^0.3.0"
   }
 }

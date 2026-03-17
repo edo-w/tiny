@@ -1,7 +1,7 @@
 import { assert, test } from 'vitest';
-import { Registration } from '~/types.js';
-import { createKey } from '~/uils.js';
-import { Registry } from '../src/registry.js';
+import { Registry } from '#src/registry.js';
+import { Registration } from '#src/types.js';
+import { createKey } from '#src/uils.js';
 
 test('can create class', () => {
 	const registry = new Registry();

@@ -1,4 +1,5 @@
 export { Tiny } from './tiny.js';
+export { TinyModule } from './module.js';
 export { createKey } from './uils.js';
 export * from './errors.js';
 export * from './types.js';

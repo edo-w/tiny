@@ -1,5 +1,8 @@
 import { RegisterKey, Registration } from './types.js';
 
+/**
+ * Internal registration store keyed by class or symbol.
+ */
 export class Registry {
 	private items: Map<RegisterKey, Registration[]>;
 
@@ -7,6 +10,9 @@ export class Registry {
 		this.items = new Map();
 	}
 
+	/**
+	 * Appends a registration to a key.
+	 */
 	add(registration: Registration): void {
 		let list = this.items.get(registration.key);
 		if (!list) {
@@ -17,6 +23,9 @@ export class Registry {
 		list.push(registration);
 	}
 
+	/**
+	 * Returns the latest registration for a key.
+	 */
 	find(key: RegisterKey): Registration | undefined {
 		const list = this.items.get(key);
 		if (!list) {
@@ -33,10 +42,16 @@ export class Registry {
 		return reg;
 	}
 
+	/**
+	 * Checks whether a key has at least one registration.
+	 */
 	has(key: RegisterKey): boolean {
 		return !!this.find(key);
 	}
 
+	/**
+	 * Returns all registrations for a key.
+	 */
 	getAll(key: RegisterKey): Registration[] | undefined {
 		const list = this.items.get(key);
 		return list;

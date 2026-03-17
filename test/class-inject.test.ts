@@ -5,8 +5,8 @@ import {
 	popTinyStack,
 	pushTinyStack,
 	resetStack,
-} from '~/class-inject.js';
-import { Tiny } from '~/tiny.js';
+} from '#src/class-inject.js';
+import { Tiny } from '#src/tiny.js';
 
 test('can push tiny stack', () => {
 	try {

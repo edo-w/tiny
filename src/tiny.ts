@@ -1,10 +1,10 @@
 import { ClassBuilder, FactoryBuilder, InstanceBuilder } from './builders.js';
 import { popTinyStack, pushTinyStack } from './class-inject.js';
-import { ComponentNotFoundError, InvalidComponentError, ResolveFailedError } from './errors.js';
+import { ComponentNotFoundError, InvalidComponentError, ResolveError } from './errors.js';
 import { TinyModule } from './module.js';
 import { Registry } from './registry.js';
 import {
-	ClassArgs,
+	ClassParameters,
 	ClassType,
 	FactoryFn,
 	Registration,
@@ -13,6 +13,12 @@ import {
 } from './types.js';
 import { unwrapKey } from './uils.js';
 
+/**
+ * Tiny dependency injection container.
+ *
+ * Supports class, instance, and factory registrations with transient, scoped,
+ * and singleton lifetimes.
+ */
 export class Tiny {
 	private root: Tiny;
 	private parent?: Tiny;
@@ -22,7 +28,7 @@ export class Tiny {
 
 	constructor(parent?: Tiny) {
 		this.parent = parent;
-		this.root = this.findRoot(this);
+		this.root = this.parent?.root ?? this.findRoot(this);
 	}
 
 	private ensureBuilders(): RegistrationBuilder[] {
@@ -111,27 +117,89 @@ export class Tiny {
 		return registration;
 	}
 
+	/**
+	 * Registers a existing instance for the provided key.
+	 */
 	addInstance<TComponent>(key: ResolveKey<TComponent>, component: TComponent): InstanceBuilder<TComponent> {
 		const builder = new InstanceBuilder(key, component);
-
 		this.addBuilder(builder);
+
 		return builder;
 	}
 
-	addClass<TComponent extends ClassType<any>>(classType: TComponent, args?: ClassArgs<TComponent>): ClassBuilder<TComponent> {
-		const builder = new ClassBuilder(classType, args);
-
+	/**
+	 * Registers a class.
+	 *
+	 * Constructor dependencies can be provided in `params`.
+	 */
+	addClass<TComponent extends ClassType<any>>(classType: TComponent, params: ClassParameters<TComponent>): ClassBuilder<TComponent> {
+		const builder = new ClassBuilder(classType, params);
 		this.addBuilder(builder);
+
 		return builder;
 	}
 
+	/**
+	 * Registers a factory for a key.
+	 */
 	addFactory<TComponent>(key: ResolveKey<TComponent>, fn: FactoryFn<TComponent>): FactoryBuilder<TComponent> {
 		const builder = new FactoryBuilder(fn).as(key);
-
 		this.addBuilder(builder);
+
 		return builder;
 	}
 
+	/**
+	 * Registers a class with singleton lifetime.
+	 *
+	 * The same instance is reused across the root container and all scopes.
+	 */
+	addSingletonClass<TComponent extends ClassType<any>>(classType: TComponent, params: ClassParameters<TComponent>): ClassBuilder<TComponent> {
+		const builder = new ClassBuilder(classType, params).singleton();
+		this.addBuilder(builder);
+
+		return builder;
+	}
+
+	/**
+	 * Registers a factory with singleton lifetime.
+	 *
+	 * The same instance is reused across the root container and all scopes.
+	 */
+	addSingletonFactory<TComponent>(key: ResolveKey<TComponent>, fn: FactoryFn<TComponent>): FactoryBuilder<TComponent> {
+		const builder = new FactoryBuilder(fn).as(key).singleton();
+		this.addBuilder(builder);
+
+		return builder;
+	}
+
+	/**
+	 * Registers a class with scoped lifetime.
+	 *
+	 * One instance is created per container scope.
+	 */
+	addScopedClass<TComponent extends ClassType<any>>(classType: TComponent, params: ClassParameters<TComponent>): ClassBuilder<TComponent> {
+		const builder = new ClassBuilder(classType, params).scoped();
+		this.addBuilder(builder);
+
+		return builder;
+	}
+
+	/**
+	 * Registers a factory with scoped lifetime.
+	 *
+	 * One instance is created per container scope.
+	 */
+	addScopedFactory<TComponent>(key: ResolveKey<TComponent>, fn: FactoryFn<TComponent>): FactoryBuilder<TComponent> {
+		const builder = new FactoryBuilder(fn).as(key).scoped();
+		this.addBuilder(builder);
+
+		return builder;
+	}
+
+	/**
+	 * Adds all registrations from a `TinyModule`.
+	 */
 	addModule(module: TinyModule): void {
 		this.ensureBuilders();
 
@@ -140,12 +208,18 @@ export class Tiny {
 		builders.push(...moduleBuilders);
 	}
 
+	/**
+	 * Checks whether a key is registered in the current container chain.
+	 */
 	has<TComponent>(key: ResolveKey<TComponent>): boolean {
 		const registration = this.findRegistration(key);
 		return !!registration;
 	}
 
-	safeGet<TComponent>(key: ResolveKey<TComponent>): TComponent | undefined {
+	/**
+	 * Resolves a component and returns `undefined` if not registered.
+	 */
+	getSafe<TComponent>(key: ResolveKey<TComponent>): TComponent | undefined {
 		const registration = this.findRegistration(key);
 		if (!registration) {
 			return undefined;
@@ -190,14 +264,18 @@ export class Tiny {
 
 			if (component === undefined) {
 				throw new InvalidComponentError('Invalid component returned from factory. Component is undefined.')
-					.setProperties({ key, registrationId: registration.id });
+					.setDetail({ key, registrationId: registration.id });
 			}
 
 			return component;
 		}
 		catch (error) {
-			throw new ResolveFailedError('Resolve component failed.')
-				.setProperties({ key })
+			if (error instanceof InvalidComponentError) {
+				throw error;
+			}
+
+			throw new ResolveError('Resolve component failed.')
+				.setDetail({ key })
 				.setCause(error);
 		}
 		finally {
@@ -207,16 +285,22 @@ export class Tiny {
 		}
 	}
 
+	/**
+	 * Resolves a component and throws when no registration is found.
+	 */
 	get<TComponent>(key: ResolveKey<TComponent>): TComponent {
-		const component = this.safeGet<TComponent>(key);
+		const component = this.getSafe<TComponent>(key);
 		if (!component) {
 			throw new ComponentNotFoundError(`Component key "${key}" not found.`)
-				.setProperties({ key });
+				.setDetail({ key });
 		}
 
 		return component;
 	}
 
+	/**
+	 * Creates a child scope that inherits registrations from this container.
+	 */
 	createScope(): Tiny {
 		const scope = new Tiny(this);
 		return scope;

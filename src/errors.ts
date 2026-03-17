@@ -1,40 +1,61 @@
 import { XError } from '@edo-w/xer';
 import { ResolveKey } from './types.js';
 
-export interface ComponentNotFoundProps {
+/**
+ * Metadata for `ComponentNotFoundError`.
+ */
+export interface ComponentNotFoundDetail {
 	key: ResolveKey;
 }
 
-export class ComponentNotFoundError extends XError<ComponentNotFoundProps> {
+/**
+ * Thrown when a requested component key has no registration.
+ */
+export class ComponentNotFoundError extends XError<ComponentNotFoundDetail> {
 	constructor(message?: string) {
 		super(message);
 		this.name = 'ComponentNotFoundError';
 	}
 }
 
-export interface ResolveFailedProps {
+/**
+ * Metadata for `ResolveError`.
+ */
+export interface ResolveFailedDetail {
 	key: ResolveKey;
 }
 
-export class ResolveFailedError extends XError<ResolveFailedProps> {
+/**
+ * Thrown when resolving a registered component fails.
+ */
+export class ResolveError extends XError<ResolveFailedDetail> {
 	constructor(message?: string) {
 		super(message);
 		this.name = 'ResolveFailedError';
 	}
 }
 
-export interface ClassArgsNotFoundProps {
+/**
+ * Metadata for `ClassParametersNotFoundError`.
+ */
+export interface ClassParametersNotFoundDetail {
 	key: ResolveKey;
 	class: string;
 }
 
-export class ClassArgsNotFoundError extends XError<ClassArgsNotFoundProps> {
+/**
+ * Thrown when constructor dependencies are required but were not configured.
+ */
+export class ClassParametersNotFoundError extends XError<ClassParametersNotFoundDetail> {
 	constructor(message?: string) {
 		super(message);
 		this.name = 'ClassArgsNotFoundError';
 	}
 }
 
+/**
+ * Thrown when property injection runs outside an active `Tiny` resolution context.
+ */
 export class CurrentContainerNotFoundError extends XError {
 	constructor(message?: string) {
 		super(message);
@@ -42,12 +63,18 @@ export class CurrentContainerNotFoundError extends XError {
 	}
 }
 
-export interface InvalidComponentProps {
+/**
+ * Metadata for `InvalidComponentError`.
+ */
+export interface InvalidComponentDetail {
 	key: ResolveKey;
 	registrationId: number;
 }
 
-export class InvalidComponentError extends XError<InvalidComponentProps> {
+/**
+ * Thrown when a factory resolves to an invalid component value.
+ */
+export class InvalidComponentError extends XError<InvalidComponentDetail> {
 	constructor(message?: string) {
 		super(message);
 		this.name = 'InvalidComponentError';

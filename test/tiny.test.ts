@@ -1,6 +1,11 @@
 import { assert, suite, test } from 'vitest';
-import { createKey, inject, Tiny } from '~/index.js';
-import { TinyModule } from '~/module.js';
+import {
+	createKey,
+	inject,
+	InvalidComponentError,
+	Tiny,
+} from '#src/index.js';
+import { TinyModule } from '#src/module.js';
 
 suite('tiny', () => {
 	test('can create instance', () => {
@@ -80,7 +85,7 @@ suite('tiny', () => {
 		const tiny = new Tiny();
 		const wrappedKey = createKey<string>('string');
 
-		const actual = tiny.safeGet(wrappedKey);
+		const actual = tiny.getSafe(wrappedKey);
 		assert.isUndefined(actual);
 	});
 
@@ -156,7 +161,7 @@ suite('#addClass', () => {
 
 	test('can add and get class', () => {
 		const tiny = new Tiny();
-		tiny.addClass(MyRepo);
+		tiny.addClass(MyRepo, []);
 
 		const instance = tiny.get(MyRepo);
 		assert.isTrue(instance instanceof MyRepo);
@@ -164,8 +169,8 @@ suite('#addClass', () => {
 
 	test('can get class with constructor args', () => {
 		const tiny = new Tiny();
-		tiny.addClass(MyRepo);
-		tiny.addClass(MyLogger);
+		tiny.addClass(MyRepo, []);
+		tiny.addClass(MyLogger, []);
 		tiny.addClass(UserService, [MyRepo, MyLogger]);
 
 		const service = tiny.get(UserService);
@@ -176,9 +181,9 @@ suite('#addClass', () => {
 
 	test('can get class with constructor args from builder', () => {
 		const tiny = new Tiny();
-		tiny.addClass(MyRepo);
-		tiny.addClass(MyLogger);
-		tiny.addClass(UserService).args([MyRepo, MyLogger]);
+		tiny.addClass(MyRepo, []);
+		tiny.addClass(MyLogger, []);
+		tiny.addClass(UserService, [MyRepo, MyLogger]);
 
 		const service = tiny.get(UserService);
 		assert.isTrue(service instanceof UserService);
@@ -188,9 +193,9 @@ suite('#addClass', () => {
 
 	test('throws error when class args are not set', () => {
 		const tiny = new Tiny();
-		tiny.addClass(MyRepo);
-		tiny.addClass(MyLogger);
-		tiny.addClass(UserService);
+		tiny.addClass(MyRepo, []);
+		tiny.addClass(MyLogger, []);
+		tiny.addClass(UserService, [] as any);
 
 		assert.throws(() => tiny.get(UserService));
 	});
@@ -200,8 +205,8 @@ suite('#addClass', () => {
 		const LoggerKey = createKey<{ log(message: string): string }>('Logger');
 		const SaverKey = createKey<{ save(message: string): string }>('Saver');
 
-		tiny.addClass(MyLogger).as(LoggerKey);
-		tiny.addClass(MyRepo);
+		tiny.addClass(MyLogger, []).as(LoggerKey);
+		tiny.addClass(MyRepo, []);
 		tiny.addClass(UserService, [MyRepo, MyLogger])
 			.as(LoggerKey)
 			.as(SaverKey);
@@ -215,9 +220,9 @@ suite('#addClass', () => {
 
 	test('can get class with property injection', () => {
 		const tiny = new Tiny();
-		tiny.addClass(MyRepo);
-		tiny.addClass(MyLogger);
-		tiny.addClass(UserServiceInject);
+		tiny.addClass(MyRepo, []);
+		tiny.addClass(MyLogger, []);
+		tiny.addClass(UserServiceInject, []);
 
 		const service = tiny.get(UserServiceInject);
 		assert.isTrue(service instanceof UserServiceInject);
@@ -233,8 +238,8 @@ suite('#addClass', () => {
 		}
 
 		const tiny = new Tiny();
-		tiny.addClass(MyRepo);
-		tiny.addClass(MyLogger);
+		tiny.addClass(MyRepo, []);
+		tiny.addClass(MyLogger, []);
 		tiny.addClass(MixedService, [MyLogger]);
 
 		const service = tiny.get(MixedService);
@@ -285,7 +290,7 @@ suite('#addFactory', () => {
 		const tiny = new Tiny();
 
 		tiny.addFactory(MyRepo, () => new MyRepo('repo1'));
-		tiny.addClass(MyLogger);
+		tiny.addClass(MyLogger, []);
 		tiny.addFactory(UserService, (t) => {
 			const logger = t.get(MyLogger);
 			const repo = t.get(MyRepo);
@@ -355,6 +360,16 @@ suite('#addFactory', () => {
 		assert.strictEqual(repo1.name, 'repo1');
 		assert.strictEqual(repo3.name, 'repo2');
 	});
+
+	test('throws InvalidComponentError when factory returns undefined component', () => {
+		const tiny = new Tiny();
+
+		tiny.addFactory(MyRepo, () => {
+			return undefined as unknown as MyRepo;
+		});
+
+		assert.throws(() => tiny.get(MyRepo), InvalidComponentError);
+	});
 });
 
 suite('#addModule', () => {
@@ -392,7 +407,7 @@ suite('#addModule', () => {
 	test('can add components to module and resolve its components', () => {
 		const mod = new TinyModule();
 		mod.addInstance(MyRepo, new MyRepo());
-		mod.addClass(MyLogger);
+		mod.addClass(MyLogger, []);
 		mod.addFactory(UserService, (t) => {
 			return new UserService(t.get(MyRepo), t.get(MyLogger));
 		});
@@ -408,7 +423,7 @@ suite('#addModule', () => {
 			constructor() {
 				super();
 				this.addInstance(MyRepo, new MyRepo());
-				this.addClass(MyLogger);
+				this.addClass(MyLogger, []);
 				this.addFactory(UserService, (t) => {
 					return new UserService(t.get(MyRepo), t.get(MyLogger));
 				});
@@ -426,6 +441,98 @@ suite('#addModule', () => {
 		assert.isTrue(logger instanceof MyLogger);
 		assert.isTrue(service instanceof UserService);
 	});
+
+	test('supports singleton helpers in module', () => {
+		class MyService {
+			value = Math.random();
+		}
+
+		const mod = new TinyModule();
+		mod.addSingletonClass(MyService, []);
+
+		const tiny = new Tiny();
+		tiny.addModule(mod);
+
+		const rootInstance = tiny.get(MyService);
+		const scope = tiny.createScope();
+		const scopedInstance = scope.get(MyService);
+
+		assert.strictEqual(rootInstance, scopedInstance);
+	});
+
+	test('supports singleton factory helper in module', () => {
+		class MyService {
+			constructor(public id: number) {}
+		}
+
+		let counter = 0;
+		const mod = new TinyModule();
+		mod.addSingletonFactory(MyService, () => {
+			counter += 1;
+			return new MyService(counter);
+		});
+
+		const tiny = new Tiny();
+		tiny.addModule(mod);
+
+		const rootInstance = tiny.get(MyService);
+		const scope = tiny.createScope();
+		const scopedInstance = scope.get(MyService);
+
+		assert.strictEqual(rootInstance, scopedInstance);
+		assert.strictEqual(counter, 1);
+	});
+
+	test('supports scoped class helper in module', () => {
+		class MyService {
+			value = Math.random();
+		}
+
+		const mod = new TinyModule();
+		mod.addScopedClass(MyService, []);
+
+		const tiny = new Tiny();
+		tiny.addModule(mod);
+
+		const rootInstance1 = tiny.get(MyService);
+		const rootInstance2 = tiny.get(MyService);
+
+		const scope = tiny.createScope();
+		const scopedInstance1 = scope.get(MyService);
+		const scopedInstance2 = scope.get(MyService);
+
+		assert.strictEqual(rootInstance1, rootInstance2);
+		assert.strictEqual(scopedInstance1, scopedInstance2);
+		assert.notStrictEqual(rootInstance1, scopedInstance1);
+	});
+
+	test('supports scoped factory helper in module', () => {
+		class MyService {
+			constructor(public id: number) {}
+		}
+
+		let counter = 0;
+		const mod = new TinyModule();
+		mod.addScopedFactory(MyService, () => {
+			counter += 1;
+			return new MyService(counter);
+		});
+
+		const tiny = new Tiny();
+		tiny.addModule(mod);
+
+		const rootInstance1 = tiny.get(MyService);
+		const rootInstance2 = tiny.get(MyService);
+
+		const scope = tiny.createScope();
+		const scopedInstance1 = scope.get(MyService);
+		const scopedInstance2 = scope.get(MyService);
+
+		assert.strictEqual(rootInstance1, rootInstance2);
+		assert.strictEqual(scopedInstance1, scopedInstance2);
+		assert.notStrictEqual(rootInstance1, scopedInstance1);
+		assert.strictEqual(counter, 2);
+	});
 });
 
 suite('lifetime', () => {
@@ -438,7 +545,7 @@ suite('lifetime', () => {
 	test('always creates new instance for transient lifetime', () => {
 		const tiny = new Tiny();
 
-		tiny.addClass(MyService).transient();
+		tiny.addClass(MyService, []).transient();
 
 		const instance1 = tiny.get(MyService);
 		const instance2 = tiny.get(MyService);
@@ -449,7 +556,7 @@ suite('lifetime', () => {
 	test('returns same instance by scoped lifetime', () => {
 		const tiny = new Tiny();
 
-		tiny.addClass(MyService).scoped();
+		tiny.addClass(MyService, []).scoped();
 
 		const rootInstance1 = tiny.get(MyService);
 		const rootInstance2 = tiny.get(MyService);
@@ -475,7 +582,7 @@ suite('lifetime', () => {
 	test('returns same instance from root for singleton lifetime', () => {
 		const tiny = new Tiny();
 
-		tiny.addClass(MyService).singleton();
+		tiny.addClass(MyService, []).singleton();
 
 		const rootInstance1 = tiny.get(MyService);
 		const rootInstance2 = tiny.get(MyService);
@@ -491,5 +598,71 @@ suite('lifetime', () => {
 		assert.strictEqual(rootInstance1, scopeInstance2);
 		assert.strictEqual(rootInstance2, scopeInstance1);
 		assert.strictEqual(rootInstance2, scopeInstance2);
+	});
+
+	test('#addSingletonClass shares instance across scopes', () => {
+		const tiny = new Tiny();
+
+		tiny.addSingletonClass(MyService, []);
+
+		const rootInstance = tiny.get(MyService);
+		const scope = tiny.createScope();
+		const scopedInstance = scope.get(MyService);
+
+		assert.strictEqual(rootInstance, scopedInstance);
+	});
+
+	test('#addScopedClass returns one instance per scope', () => {
+		const tiny = new Tiny();
+
+		tiny.addScopedClass(MyService, []);
+
+		const rootInstance1 = tiny.get(MyService);
+		const rootInstance2 = tiny.get(MyService);
+		const scope = tiny.createScope();
+		const scopedInstance1 = scope.get(MyService);
+		const scopedInstance2 = scope.get(MyService);
+
+		assert.strictEqual(rootInstance1, rootInstance2);
+		assert.strictEqual(scopedInstance1, scopedInstance2);
+		assert.notStrictEqual(rootInstance1, scopedInstance1);
+	});
+
+	test('#addSingletonFactory shares instance across scopes', () => {
+		const tiny = new Tiny();
+		let created = 0;
+
+		tiny.addSingletonFactory(MyService, () => {
+			created += 1;
+			return new MyService();
+		});
+
+		const rootInstance = tiny.get(MyService);
+		const scope = tiny.createScope();
+		const scopedInstance = scope.get(MyService);
+
+		assert.strictEqual(rootInstance, scopedInstance);
+		assert.strictEqual(created, 1);
+	});
+
+	test('#addScopedFactory returns one instance per scope', () => {
+		const tiny = new Tiny();
+		let created = 0;
+
+		tiny.addScopedFactory(MyService, () => {
+			created += 1;
+			return new MyService();
+		});
+
+		const rootInstance1 = tiny.get(MyService);
+		const rootInstance2 = tiny.get(MyService);
+		const scope = tiny.createScope();
+		const scopedInstance1 = scope.get(MyService);
+		const scopedInstance2 = scope.get(MyService);
+
+		assert.strictEqual(rootInstance1, rootInstance2);
+		assert.strictEqual(scopedInstance1, scopedInstance2);
+		assert.notStrictEqual(rootInstance1, scopedInstance1);
+		assert.strictEqual(created, 2);
 	});
 });
