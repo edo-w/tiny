@@ -1,6 +1,6 @@
 {
   "name": "@edo-w/tiny",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Tiny is a typescript dependency injection library for building maintainable applications.",
   "repository": {
     "type": "git",
