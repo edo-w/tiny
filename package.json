@@ -1,6 +1,6 @@
 {
   "name": "@edo-w/tiny",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Tiny is a typescript dependency injection library for building maintainable applications.",
   "repository": {
     "type": "git",
@@ -35,7 +35,7 @@
     "dev": "tsc --watch",
     "build": "tsc",
     "test": "vitest run",
-	"testw": "vitest",
+    "testw": "vitest",
     "cover": "vitest run --coverage",
     "coverv": "start dist/.coverage/index.html",
     "release": "biome lint && pnpm build && pnpm test && changeset publish"
