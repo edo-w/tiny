@@ -1,19 +1,18 @@
 # https://lefthook.dev/configuration/
 
 pre-commit:
-  parallel: true
   jobs:
-    - name: test
-      run: pnpm test
+    - run: pnpm fmt
+    - run: pnpm lint {staged_files}
       glob: "**/*.{ts,tsx,js,jsx}"
-      exclude:
-        - '*.config.{js,mjs}'
-
-    - name: lint
-      run: pnpm lint-staged
+      exclude: "*.config.{js,mjs}"
+    - run: pnpm build
+    - run: pnpm test
+      glob: "**/*.{ts,tsx,js,jsx}"
+      exclude: "*.config.{js,mjs}"
 
 commit-msg:
   commands:
-    commit-lint:
+    commitlint:
       run: pnpm commitlint --edit "$1"
 

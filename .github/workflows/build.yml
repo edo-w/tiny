@@ -1,25 +1,19 @@
-name: Build
+name: build
 
 on:
   push:
     branches:
       - master
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v6
-
-      - uses: ./.github/setup
-
-      - name: Build project
+      - uses: ./.github/actions/setup
+      - name: run lint
+        run: pnpm lint
+      - name: run build
         run: pnpm build
-
-      - name: Run tests
+      - name: run tests
         run: pnpm test

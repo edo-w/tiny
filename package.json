@@ -30,36 +30,25 @@
   ],
   "scripts": {
     "clean": "rimraf ./dist",
-    "build": "tsc && tsc-alias",
+    "fmt": "biome format --write",
+    "lint": "biome lint --write",
+    "dev": "tsc --watch",
+    "build": "tsc",
     "test": "vitest run",
     "cover": "vitest run --coverage",
     "coverv": "start dist/.coverage/index.html",
-    "lint": "eslint  --cache --cache-location ./dist .",
-    "dev": "f [dev:*]",
-    "watch:build": "tsc --watch",
-    "watch:alias": "tsc-alias --watch",
-    "release": "pnpm build && pnpm test run && changeset publish"
+    "release": "biome lint && pnpm build && pnpm test && changeset publish"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.4.6",
     "@changesets/cli": "^2.29.7",
     "@commitlint/cli": "^20.1.0",
     "@commitlint/config-conventional": "^20.0.0",
     "@edo-w/devconfig": "^0.8.0",
     "@vitest/coverage-v8": "^4.0.12",
-    "eslint": "^9.39.1",
-    "frunk": "^0.0.4",
-    "lefthook": "^2.0.4",
-    "lint-staged": "^16.2.7",
     "rimraf": "^6.1.2",
-    "tsc-alias": "^1.8.16",
-    "typedoc": "^0.28.14",
     "typescript": "^5.9.3",
     "vitest": "^4.0.12"
-  },
-  "lint-staged": {
-    "*.{ts,tsx,js,jsx}": [
-      "eslint --fix"
-    ]
   },
   "dependencies": {
     "@edo-w/xer": "^0.3.0"
