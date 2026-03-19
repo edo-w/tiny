@@ -1,11 +1,5 @@
 import { assert, test } from 'vitest';
-import {
-	getCurrentTiny,
-	peekTinyStack,
-	popTinyStack,
-	pushTinyStack,
-	resetStack,
-} from '#src/class-inject.js';
+import { getCurrentTiny, peekTinyStack, popTinyStack, pushTinyStack, resetStack } from '#src/class-inject.js';
 import { Tiny } from '#src/tiny.js';
 
 test('can push tiny stack', () => {
@@ -16,8 +10,7 @@ test('can push tiny stack', () => {
 		const current = getCurrentTiny();
 
 		assert.strictEqual(current, tiny);
-	}
-	finally {
+	} finally {
 		resetStack();
 	}
 });
@@ -34,8 +27,7 @@ test('can pop tiny stack', () => {
 		popTinyStack();
 		const peek = peekTinyStack();
 		assert.isUndefined(peek);
-	}
-	finally {
+	} finally {
 		resetStack();
 	}
 });

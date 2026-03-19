@@ -1,6 +1,6 @@
 import { assert, test } from 'vitest';
 import { Registry } from '#src/registry.js';
-import { Registration } from '#src/types.js';
+import type { Registration } from '#src/types.js';
 import { createKey } from '#src/uils.js';
 
 test('can create class', () => {

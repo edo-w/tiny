@@ -1,16 +1,9 @@
 import { ClassBuilder, FactoryBuilder, InstanceBuilder } from './builders.js';
 import { popTinyStack, pushTinyStack } from './class-inject.js';
 import { ComponentNotFoundError, InvalidComponentError, ResolveError } from './errors.js';
-import { TinyModule } from './module.js';
+import type { TinyModule } from './module.js';
 import { Registry } from './registry.js';
-import {
-	ClassParameters,
-	ClassType,
-	FactoryFn,
-	Registration,
-	RegistrationBuilder,
-	ResolveKey,
-} from './types.js';
+import type { ClassDeps, ClassType, FactoryFn, Registration, RegistrationBuilder, ResolveKey } from './types.js';
 import { unwrapKey } from './uils.js';
 
 /**
@@ -132,8 +125,11 @@ export class Tiny {
 	 *
 	 * Constructor dependencies can be provided in `params`.
 	 */
-	addClass<TComponent extends ClassType<any>>(classType: TComponent, params: ClassParameters<TComponent>): ClassBuilder<TComponent> {
-		const builder = new ClassBuilder(classType, params);
+	addClass<TComponent extends ClassType<any>>(
+		classType: TComponent,
+		deps: ClassDeps<TComponent>,
+	): ClassBuilder<TComponent> {
+		const builder = new ClassBuilder(classType, deps);
 		this.addBuilder(builder);
 
 		return builder;
@@ -154,8 +150,11 @@ export class Tiny {
 	 *
 	 * The same instance is reused across the root container and all scopes.
 	 */
-	addSingletonClass<TComponent extends ClassType<any>>(classType: TComponent, params: ClassParameters<TComponent>): ClassBuilder<TComponent> {
-		const builder = new ClassBuilder(classType, params).singleton();
+	addSingletonClass<TComponent extends ClassType<any>>(
+		classType: TComponent,
+		deps: ClassDeps<TComponent>,
+	): ClassBuilder<TComponent> {
+		const builder = new ClassBuilder(classType, deps).singleton();
 		this.addBuilder(builder);
 
 		return builder;
@@ -166,7 +165,10 @@ export class Tiny {
 	 *
 	 * The same instance is reused across the root container and all scopes.
 	 */
-	addSingletonFactory<TComponent>(key: ResolveKey<TComponent>, fn: FactoryFn<TComponent>): FactoryBuilder<TComponent> {
+	addSingletonFactory<TComponent>(
+		key: ResolveKey<TComponent>,
+		fn: FactoryFn<TComponent>,
+	): FactoryBuilder<TComponent> {
 		const builder = new FactoryBuilder(fn).as(key).singleton();
 		this.addBuilder(builder);
 
@@ -178,8 +180,11 @@ export class Tiny {
 	 *
 	 * One instance is created per container scope.
 	 */
-	addScopedClass<TComponent extends ClassType<any>>(classType: TComponent, params: ClassParameters<TComponent>): ClassBuilder<TComponent> {
-		const builder = new ClassBuilder(classType, params).scoped();
+	addScopedClass<TComponent extends ClassType<any>>(
+		classType: TComponent,
+		deps: ClassDeps<TComponent>,
+	): ClassBuilder<TComponent> {
+		const builder = new ClassBuilder(classType, deps).scoped();
 		this.addBuilder(builder);
 
 		return builder;
@@ -226,7 +231,7 @@ export class Tiny {
 		}
 
 		let pushed = false;
-		let component: TComponent | undefined = undefined;
+		let component: TComponent | undefined;
 		try {
 			pushed = pushTinyStack(this);
 
@@ -263,22 +268,24 @@ export class Tiny {
 			}
 
 			if (component === undefined) {
-				throw new InvalidComponentError('Invalid component returned from factory. Component is undefined.')
-					.setDetail({ key, registrationId: registration.id });
+				throw new InvalidComponentError(
+					'Invalid component returned from factory. Component is undefined.',
+				).setDetail({
+					key,
+					registrationId: registration.id,
+				});
 			}
 
 			return component;
-		}
-		catch (error) {
+		} catch (error) {
 			if (error instanceof InvalidComponentError) {
 				throw error;
 			}
 
-			throw new ResolveError('Resolve component failed.')
-				.setDetail({ key })
-				.setCause(error);
-		}
-		finally {
+			// throw error;
+
+			throw new ResolveError('Resolve component failed.').setDetail({ key }).setCause(error);
+		} finally {
 			if (pushed) {
 				popTinyStack();
 			}
@@ -291,8 +298,7 @@ export class Tiny {
 	get<TComponent>(key: ResolveKey<TComponent>): TComponent {
 		const component = this.getSafe<TComponent>(key);
 		if (!component) {
-			throw new ComponentNotFoundError(`Component key "${key}" not found.`)
-				.setDetail({ key });
+			throw new ComponentNotFoundError(`Component key "${key.name}" not found.`).setDetail({ key });
 		}
 
 		return component;

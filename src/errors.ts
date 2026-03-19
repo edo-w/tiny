@@ -1,17 +1,17 @@
 import { XError } from '@edo-w/xer';
-import { ResolveKey } from './types.js';
+import type { ResolveKey } from './types.js';
 
 /**
  * Metadata for `ComponentNotFoundError`.
  */
-export interface ComponentNotFoundDetail {
+export interface ComponentNotFoundErrorDetail {
 	key: ResolveKey;
 }
 
 /**
  * Thrown when a requested component key has no registration.
  */
-export class ComponentNotFoundError extends XError<ComponentNotFoundDetail> {
+export class ComponentNotFoundError extends XError<ComponentNotFoundErrorDetail> {
 	constructor(message?: string) {
 		super(message);
 		this.name = 'ComponentNotFoundError';
@@ -21,14 +21,14 @@ export class ComponentNotFoundError extends XError<ComponentNotFoundDetail> {
 /**
  * Metadata for `ResolveError`.
  */
-export interface ResolveFailedDetail {
+export interface ResolveErrorDetail {
 	key: ResolveKey;
 }
 
 /**
  * Thrown when resolving a registered component fails.
  */
-export class ResolveError extends XError<ResolveFailedDetail> {
+export class ResolveError extends XError<ResolveErrorDetail> {
 	constructor(message?: string) {
 		super(message);
 		this.name = 'ResolveFailedError';
@@ -36,9 +36,9 @@ export class ResolveError extends XError<ResolveFailedDetail> {
 }
 
 /**
- * Metadata for `ClassParametersNotFoundError`.
+ * Metadata for `ClassDepsNotFoundError`.
  */
-export interface ClassParametersNotFoundDetail {
+export interface ClassDepsNotFoundErrorDetail {
 	key: ResolveKey;
 	class: string;
 }
@@ -46,27 +46,27 @@ export interface ClassParametersNotFoundDetail {
 /**
  * Thrown when constructor dependencies are required but were not configured.
  */
-export class ClassParametersNotFoundError extends XError<ClassParametersNotFoundDetail> {
+export class ClassDepsNotFoundError extends XError<ClassDepsNotFoundErrorDetail> {
 	constructor(message?: string) {
 		super(message);
-		this.name = 'ClassArgsNotFoundError';
+		this.name = 'ClassDepsNotFoundError';
 	}
 }
 
 /**
  * Thrown when property injection runs outside an active `Tiny` resolution context.
  */
-export class CurrentContainerNotFoundError extends XError {
+export class ContainerNotFoundError extends XError {
 	constructor(message?: string) {
 		super(message);
-		this.name = 'CurrentContainerNotFoundError';
+		this.name = 'ContainerNotFoundError';
 	}
 }
 
 /**
  * Metadata for `InvalidComponentError`.
  */
-export interface InvalidComponentDetail {
+export interface InvalidComponentErrorDetail {
 	key: ResolveKey;
 	registrationId: number;
 }
@@ -74,7 +74,7 @@ export interface InvalidComponentDetail {
 /**
  * Thrown when a factory resolves to an invalid component value.
  */
-export class InvalidComponentError extends XError<InvalidComponentDetail> {
+export class InvalidComponentError extends XError<InvalidComponentErrorDetail> {
 	constructor(message?: string) {
 		super(message);
 		this.name = 'InvalidComponentError';

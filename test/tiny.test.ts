@@ -1,10 +1,5 @@
 import { assert, suite, test } from 'vitest';
-import {
-	createKey,
-	inject,
-	InvalidComponentError,
-	Tiny,
-} from '#src/index.js';
+import { createKey, InvalidComponentError, inject, Tiny } from '#src/index.js';
 import { TinyModule } from '#src/module.js';
 
 suite('tiny', () => {
@@ -207,9 +202,7 @@ suite('#addClass', () => {
 
 		tiny.addClass(MyLogger, []).as(LoggerKey);
 		tiny.addClass(MyRepo, []);
-		tiny.addClass(UserService, [MyRepo, MyLogger])
-			.as(LoggerKey)
-			.as(SaverKey);
+		tiny.addClass(UserService, [MyRepo, MyLogger]).as(LoggerKey).as(SaverKey);
 
 		const logger = tiny.get(LoggerKey);
 		const saver = tiny.get(SaverKey);
@@ -394,7 +387,7 @@ suite('#addModule', () => {
 
 	test('can create empty module', () => {
 		class MyModule extends TinyModule {
-			config() { }
+			config() {}
 		}
 
 		const mod = new MyModule();

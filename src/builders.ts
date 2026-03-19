@@ -1,12 +1,5 @@
 import { ClassFactory } from './class-factory.js';
-import {
-	ClassType,
-	FactoryFn,
-	Lifetime,
-	Registration,
-	RegistrationBuilder,
-	ResolveKey,
-} from './types.js';
+import type { ClassType, FactoryFn, Lifetime, Registration, RegistrationBuilder, ResolveKey } from './types.js';
 import { getNextRegistrationId, unwrapKey } from './uils.js';
 
 /**
@@ -48,18 +41,18 @@ export class ClassBuilder<TComponent extends ClassType<any>> implements Registra
 	private classType: ClassType<TComponent>;
 	private keys: ResolveKey[];
 	private _lifetime: Lifetime;
-	private _params: ResolveKey[];
+	private _deps: ResolveKey[];
 
-	constructor(classType: ClassType<TComponent>, params: ResolveKey[]) {
+	constructor(classType: ClassType<TComponent>, deps: ResolveKey[]) {
 		this.classType = classType;
 		this.keys = [classType];
 		this._lifetime = 'transient';
-		this._params = params;
+		this._deps = deps;
 	}
 
 	build(): Registration[] {
 		const registrations: Registration[] = [];
-		const classFactory = new ClassFactory(this.classType, this._params);
+		const classFactory = new ClassFactory(this.classType, this._deps);
 		const factory = classFactory.create.bind(classFactory);
 
 		for (const key of this.keys) {

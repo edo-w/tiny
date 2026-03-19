@@ -1,11 +1,5 @@
 import { ClassBuilder, FactoryBuilder, InstanceBuilder } from './builders.js';
-import {
-	ClassParameters,
-	ClassType,
-	FactoryFn,
-	RegistrationBuilder,
-	ResolveKey,
-} from './types.js';
+import type { ClassDeps, ClassType, FactoryFn, RegistrationBuilder, ResolveKey } from './types.js';
 
 /**
  * Reusable registration bundle.
@@ -32,8 +26,11 @@ export class TinyModule {
 	/**
 	 * Adds a class registration to the module.
 	 */
-	addClass<TComponent extends ClassType<any>>(classType: TComponent, params: ClassParameters<TComponent>): ClassBuilder<TComponent> {
-		const builder = new ClassBuilder(classType, params);
+	addClass<TComponent extends ClassType<any>>(
+		classType: TComponent,
+		deps: ClassDeps<TComponent>,
+	): ClassBuilder<TComponent> {
+		const builder = new ClassBuilder(classType, deps);
 		this.builders.push(builder);
 
 		return builder;
@@ -52,8 +49,11 @@ export class TinyModule {
 	/**
 	 * Adds a singleton class registration to the module.
 	 */
-	addSingletonClass<TComponent extends ClassType<any>>(classType: TComponent, params: ClassParameters<TComponent>): ClassBuilder<TComponent> {
-		const builder = new ClassBuilder(classType, params).singleton();
+	addSingletonClass<TComponent extends ClassType<any>>(
+		classType: TComponent,
+		deps: ClassDeps<TComponent>,
+	): ClassBuilder<TComponent> {
+		const builder = new ClassBuilder(classType, deps).singleton();
 		this.builders.push(builder);
 
 		return builder;
@@ -62,7 +62,10 @@ export class TinyModule {
 	/**
 	 * Adds a singleton factory registration to the module.
 	 */
-	addSingletonFactory<TComponent>(key: ResolveKey<TComponent>, fn: FactoryFn<TComponent>): FactoryBuilder<TComponent> {
+	addSingletonFactory<TComponent>(
+		key: ResolveKey<TComponent>,
+		fn: FactoryFn<TComponent>,
+	): FactoryBuilder<TComponent> {
 		const builder = new FactoryBuilder(fn).as(key).singleton();
 		this.builders.push(builder);
 
@@ -72,8 +75,11 @@ export class TinyModule {
 	/**
 	 * Adds a scoped class registration to the module.
 	 */
-	addScopedClass<TComponent extends ClassType<any>>(classType: TComponent, params: ClassParameters<TComponent>): ClassBuilder<TComponent> {
-		const builder = new ClassBuilder(classType, params).scoped();
+	addScopedClass<TComponent extends ClassType<any>>(
+		classType: TComponent,
+		deps: ClassDeps<TComponent>,
+	): ClassBuilder<TComponent> {
+		const builder = new ClassBuilder(classType, deps).scoped();
 		this.builders.push(builder);
 
 		return builder;

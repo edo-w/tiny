@@ -12,7 +12,8 @@
 	"formatter": {
 		"enabled": true,
 		"indentStyle": "tab",
-		"lineWidth": 120
+		"lineWidth": 120,
+		"useEditorconfig": true
 	},
 	"linter": {
 		"enabled": true,
@@ -27,7 +28,7 @@
 	},
 	"overrides": [
 		{
-			"includes": ["test/**", "scripts/**"],
+			"includes": ["src/**", "test/**", "scripts/**"],
 			"linter": {
 				"rules": {
 					"style": {

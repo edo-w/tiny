@@ -1,12 +1,6 @@
 import { assert, test } from 'vitest';
 import { WrappedKey } from '#src/types.js';
-import {
-	createKey,
-	getNextRegistrationId,
-	isWrappedKey,
-	resetRegistrationId,
-	unwrapKey,
-} from '#src/uils.js';
+import { createKey, getNextRegistrationId, isWrappedKey, resetRegistrationId, unwrapKey } from '#src/uils.js';
 
 test('#createKey creates a wrapped key', () => {
 	const key = createKey<string>('mykey');

@@ -1,4 +1,4 @@
-import { RegisterKey, Registration } from './types.js';
+import type { RegisterKey, Registration } from './types.js';
 
 /**
  * Internal registration store keyed by class or symbol.

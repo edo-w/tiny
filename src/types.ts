@@ -7,13 +7,11 @@ export interface ClassType<T> {
 
 /**
  * Maps a class constructor parameter list to DI resolution keys.
- *
- * Use this when registering class dependencies in constructor order.
  */
-export type ClassParameters<TClass extends ClassType<any>> =
-	ConstructorParameters<TClass> extends [...infer Params]
-		? { [K in keyof Params]: ResolveKey<Params[K]> }
-		: never;
+// biome-ignore format: readable
+export type ClassDeps<TClass extends ClassType<any>> = ConstructorParameters<TClass> extends [...infer Params]
+	? { [K in keyof Params]: ResolveKey<Params[K]> }
+	: never;
 
 /**
  * Tiny context passed to factories and helper utilities.
@@ -54,7 +52,7 @@ export const WrappedKey = Symbol('tiny:WrappedKey');
 /**
  * Strongly-typed key wrapper for non-class registrations.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// biome-ignore lint/correctness/noUnusedVariables: generic type used for type safety, not runtime values
 export interface WrappedKey<TComponent> {
 	kind: typeof WrappedKey;
 	name: string;
@@ -71,10 +69,7 @@ export type ResolveKey<TComponent = any> = WrappedKey<TComponent> | ClassType<TC
 /**
  * Controls caching behavior for a registration.
  */
-export type Lifetime =
-	| 'singleton'
-	| 'scoped'
-	| 'transient';
+export type Lifetime = 'singleton' | 'scoped' | 'transient';
 
 /**
  * Contract implemented by registration builders to produce registry entries.

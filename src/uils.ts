@@ -1,4 +1,4 @@
-import { RegisterKey, ResolveKey, WrappedKey } from './types.js';
+import { type RegisterKey, type ResolveKey, WrappedKey } from './types.js';
 
 /**
  * Creates a strongly-typed wrapped key for non-class registrations.

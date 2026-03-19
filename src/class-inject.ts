@@ -1,6 +1,6 @@
-import { CurrentContainerNotFoundError } from './errors.js';
-import { Tiny } from './tiny.js';
-import { ResolveKey } from './types.js';
+import { ContainerNotFoundError } from './errors.js';
+import type { Tiny } from './tiny.js';
+import type { ResolveKey } from './types.js';
 
 const tinyStack: Tiny[] = [];
 
@@ -46,7 +46,9 @@ export function popTinyStack(): void {
 export function getCurrentTiny(): Tiny {
 	const current = peekTinyStack();
 	if (!current) {
-		throw new CurrentContainerNotFoundError('Current container not found. Please ensure you are creating a class instance from a tiny container and not directly with "new".');
+		throw new ContainerNotFoundError(
+			'Current container not found. Please ensure you are creating a class instance from a tiny container and not directly with "new".',
+		);
 	}
 
 	return current;
