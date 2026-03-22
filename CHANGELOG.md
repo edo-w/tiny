@@ -1,5 +1,11 @@
 # @edo-w/tiny
 
+## 0.3.1
+
+### Patch Changes
+
+- 6733fd6: Update documentation with lazy component resolution features
+
 ## 0.3.0
 
 ### Minor Changes
