@@ -6,11 +6,11 @@ import type { ClassType, ResolveKey, TinyContext } from './types.js';
  */
 export class ClassFactory {
 	private classType: ClassType<any>;
-	private params: ResolveKey[];
+	private deps: ResolveKey[];
 
-	constructor(classType: ClassType<any>, params: ResolveKey[]) {
+	constructor(classType: ClassType<any>, deps: ResolveKey[]) {
 		this.classType = classType;
-		this.params = params;
+		this.deps = deps;
 	}
 
 	/**
@@ -21,9 +21,9 @@ export class ClassFactory {
 			return new this.classType();
 		}
 
-		const hasParams = this.params.length === this.classType.length;
-		if (hasParams) {
-			const components = this.params.map((param) => t.get(param));
+		const hasDeps = this.deps.length === this.classType.length;
+		if (hasDeps) {
+			const components = this.deps.map((dep) => t.get(dep));
 			return new this.classType(...components);
 		}
 

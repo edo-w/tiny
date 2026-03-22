@@ -3,8 +3,18 @@ import { popTinyStack, pushTinyStack } from './class-inject.js';
 import { ComponentNotFoundError, InvalidComponentError, ResolveError } from './errors.js';
 import type { TinyModule } from './module.js';
 import { Registry } from './registry.js';
-import type { ClassDeps, ClassType, FactoryFn, Registration, RegistrationBuilder, ResolveKey } from './types.js';
-import { unwrapKey } from './uils.js';
+import type {
+	ClassDeps,
+	ClassType,
+	ComponentKey,
+	FactoryFn,
+	Lazy,
+	Registration,
+	RegistrationBuilder,
+	ResolveKey,
+	ResolveResult,
+} from './types.js';
+import { isLazyKey, unwrapKey } from './uils.js';
 
 /**
  * Tiny dependency injection container.
@@ -94,6 +104,10 @@ export class Tiny {
 	}
 
 	findRegistration(key: ResolveKey): Registration | undefined {
+		if (isLazyKey(key)) {
+			return this.findRegistration(key.innerKey);
+		}
+
 		this.build();
 
 		let registration: Registration | undefined;
@@ -113,7 +127,7 @@ export class Tiny {
 	/**
 	 * Registers a existing instance for the provided key.
 	 */
-	addInstance<TComponent>(key: ResolveKey<TComponent>, component: TComponent): InstanceBuilder<TComponent> {
+	addInstance<TComponent>(key: ComponentKey<TComponent>, component: TComponent): InstanceBuilder<TComponent> {
 		const builder = new InstanceBuilder(key, component);
 		this.addBuilder(builder);
 
@@ -138,7 +152,7 @@ export class Tiny {
 	/**
 	 * Registers a factory for a key.
 	 */
-	addFactory<TComponent>(key: ResolveKey<TComponent>, fn: FactoryFn<TComponent>): FactoryBuilder<TComponent> {
+	addFactory<TComponent>(key: ComponentKey<TComponent>, fn: FactoryFn<TComponent>): FactoryBuilder<TComponent> {
 		const builder = new FactoryBuilder(fn).as(key);
 		this.addBuilder(builder);
 
@@ -166,7 +180,7 @@ export class Tiny {
 	 * The same instance is reused across the root container and all scopes.
 	 */
 	addSingletonFactory<TComponent>(
-		key: ResolveKey<TComponent>,
+		key: ComponentKey<TComponent>,
 		fn: FactoryFn<TComponent>,
 	): FactoryBuilder<TComponent> {
 		const builder = new FactoryBuilder(fn).as(key).singleton();
@@ -195,7 +209,7 @@ export class Tiny {
 	 *
 	 * One instance is created per container scope.
 	 */
-	addScopedFactory<TComponent>(key: ResolveKey<TComponent>, fn: FactoryFn<TComponent>): FactoryBuilder<TComponent> {
+	addScopedFactory<TComponent>(key: ComponentKey<TComponent>, fn: FactoryFn<TComponent>): FactoryBuilder<TComponent> {
 		const builder = new FactoryBuilder(fn).as(key).scoped();
 		this.addBuilder(builder);
 
@@ -224,14 +238,22 @@ export class Tiny {
 	/**
 	 * Resolves a component and returns `undefined` if not registered.
 	 */
-	getSafe<TComponent>(key: ResolveKey<TComponent>): TComponent | undefined {
+	getSafe<TKey extends ResolveKey>(key: TKey): ResolveResult<TKey> | undefined {
 		const registration = this.findRegistration(key);
 		if (!registration) {
 			return undefined;
 		}
 
+		if (isLazyKey(key)) {
+			const lazyComponent: Lazy<unknown> = {
+				get: () => this.get(key.innerKey),
+			};
+
+			return lazyComponent as ResolveResult<TKey>;
+		}
+
 		let pushed = false;
-		let component: TComponent | undefined;
+		let component: unknown | undefined;
 		try {
 			pushed = pushTinyStack(this);
 
@@ -276,7 +298,7 @@ export class Tiny {
 				});
 			}
 
-			return component;
+			return component as ResolveResult<TKey>;
 		} catch (error) {
 			if (error instanceof InvalidComponentError) {
 				throw error;
@@ -295,8 +317,8 @@ export class Tiny {
 	/**
 	 * Resolves a component and throws when no registration is found.
 	 */
-	get<TComponent>(key: ResolveKey<TComponent>): TComponent {
-		const component = this.getSafe<TComponent>(key);
+	get<TKey extends ResolveKey>(key: TKey): ResolveResult<TKey> {
+		const component = this.getSafe(key);
 		if (!component) {
 			throw new ComponentNotFoundError(`Component key "${key.name}" not found.`).setDetail({ key });
 		}

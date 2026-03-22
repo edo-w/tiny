@@ -1,5 +1,5 @@
 import { ClassBuilder, FactoryBuilder, InstanceBuilder } from './builders.js';
-import type { ClassDeps, ClassType, FactoryFn, RegistrationBuilder, ResolveKey } from './types.js';
+import type { ClassDeps, ClassType, ComponentKey, FactoryFn, RegistrationBuilder } from './types.js';
 
 /**
  * Reusable registration bundle.
@@ -16,7 +16,7 @@ export class TinyModule {
 	/**
 	 * Adds an existing instance registration to the module.
 	 */
-	addInstance<TComponent>(key: ResolveKey<TComponent>, component: TComponent): InstanceBuilder<TComponent> {
+	addInstance<TComponent>(key: ComponentKey<TComponent>, component: TComponent): InstanceBuilder<TComponent> {
 		const builder = new InstanceBuilder(key, component);
 		this.builders.push(builder);
 
@@ -39,7 +39,7 @@ export class TinyModule {
 	/**
 	 * Adds a factory registration to the module.
 	 */
-	addFactory<TComponent>(key: ResolveKey<TComponent>, fn: FactoryFn<TComponent>): FactoryBuilder<TComponent> {
+	addFactory<TComponent>(key: ComponentKey<TComponent>, fn: FactoryFn<TComponent>): FactoryBuilder<TComponent> {
 		const builder = new FactoryBuilder(fn).as(key);
 		this.builders.push(builder);
 
@@ -63,7 +63,7 @@ export class TinyModule {
 	 * Adds a singleton factory registration to the module.
 	 */
 	addSingletonFactory<TComponent>(
-		key: ResolveKey<TComponent>,
+		key: ComponentKey<TComponent>,
 		fn: FactoryFn<TComponent>,
 	): FactoryBuilder<TComponent> {
 		const builder = new FactoryBuilder(fn).as(key).singleton();
@@ -88,7 +88,7 @@ export class TinyModule {
 	/**
 	 * Adds a scoped factory registration to the module.
 	 */
-	addScopedFactory<TComponent>(key: ResolveKey<TComponent>, fn: FactoryFn<TComponent>): FactoryBuilder<TComponent> {
+	addScopedFactory<TComponent>(key: ComponentKey<TComponent>, fn: FactoryFn<TComponent>): FactoryBuilder<TComponent> {
 		const builder = new FactoryBuilder(fn).as(key).scoped();
 		this.builders.push(builder);
 

@@ -31,7 +31,7 @@
   "scripts": {
     "clean": "rimraf ./dist",
     "fmt": "biome format --write",
-    "lint": "biome lint --write",
+    "lint": "biome check --write",
     "dev": "tsc --watch",
     "build": "tsc",
     "test": "vitest run",

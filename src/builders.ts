@@ -1,15 +1,23 @@
 import { ClassFactory } from './class-factory.js';
-import type { ClassType, FactoryFn, Lifetime, Registration, RegistrationBuilder, ResolveKey } from './types.js';
+import type {
+	ClassType,
+	ComponentKey,
+	FactoryFn,
+	Lifetime,
+	Registration,
+	RegistrationBuilder,
+	ResolveKey,
+} from './types.js';
 import { getNextRegistrationId, unwrapKey } from './uils.js';
 
 /**
  * Builder for instance registrations.
  */
 export class InstanceBuilder<TComponent> implements RegistrationBuilder {
-	private key: ResolveKey<TComponent>;
+	private key: ComponentKey<TComponent>;
 	private instance: TComponent;
 
-	constructor(key: ResolveKey<TComponent>, instance: TComponent) {
+	constructor(key: ComponentKey<TComponent>, instance: TComponent) {
 		this.key = key;
 		this.instance = instance;
 	}
@@ -39,7 +47,7 @@ export class InstanceBuilder<TComponent> implements RegistrationBuilder {
  */
 export class ClassBuilder<TComponent extends ClassType<any>> implements RegistrationBuilder {
 	private classType: ClassType<TComponent>;
-	private keys: ResolveKey[];
+	private keys: ComponentKey[];
 	private _lifetime: Lifetime;
 	private _deps: ResolveKey[];
 
@@ -104,7 +112,7 @@ export class ClassBuilder<TComponent extends ClassType<any>> implements Registra
 	/**
 	 * Adds an additional key for resolving the same class registration.
 	 */
-	as(key: ResolveKey): this {
+	as(key: ComponentKey): this {
 		this.keys.push(key);
 		return this;
 	}
@@ -115,7 +123,7 @@ export class ClassBuilder<TComponent extends ClassType<any>> implements Registra
  */
 export class FactoryBuilder<TComponent> implements RegistrationBuilder {
 	private factory: FactoryFn<TComponent>;
-	private keys: ResolveKey[];
+	private keys: ComponentKey[];
 	private _lifetime: Lifetime;
 
 	constructor(factory: FactoryFn<TComponent>) {
@@ -176,7 +184,7 @@ export class FactoryBuilder<TComponent> implements RegistrationBuilder {
 	/**
 	 * Adds an additional key for resolving the same factory registration.
 	 */
-	as(key: ResolveKey): this {
+	as(key: ComponentKey): this {
 		this.keys.push(key);
 		return this;
 	}

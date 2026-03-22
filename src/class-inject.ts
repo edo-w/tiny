@@ -1,6 +1,6 @@
 import { ContainerNotFoundError } from './errors.js';
 import type { Tiny } from './tiny.js';
-import type { ResolveKey } from './types.js';
+import type { ResolveKey, ResolveResult } from './types.js';
 
 const tinyStack: Tiny[] = [];
 
@@ -57,7 +57,7 @@ export function getCurrentTiny(): Tiny {
 /**
  * Resolves a component from the current container during class initialization.
  */
-export function inject<TComponent>(key: ResolveKey<TComponent>): TComponent {
+export function inject<TKey extends ResolveKey>(key: TKey): ResolveResult<TKey> {
 	const current = getCurrentTiny();
 	return current.get(key);
 }

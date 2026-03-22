@@ -1,5 +1,5 @@
 import { assert, suite, test } from 'vitest';
-import { createKey, InvalidComponentError, inject, Tiny } from '#src/index.js';
+import { ComponentNotFoundError, createKey, createLazyKey, InvalidComponentError, inject, Tiny } from '#src/index.js';
 import { TinyModule } from '#src/module.js';
 
 suite('tiny', () => {
@@ -90,6 +90,118 @@ suite('tiny', () => {
 
 		assert.ok(scope);
 		assert.notStrictEqual(tiny, scope);
+	});
+});
+
+suite('lazy', () => {
+	test('can resolve a lazy wrapper for a class key', () => {
+		class MyService {
+			print(): string {
+				return 'hello';
+			}
+		}
+
+		const tiny = new Tiny();
+		tiny.addClass(MyService, []);
+
+		const lazyService = tiny.get(createLazyKey(MyService));
+		const actual = lazyService.get();
+
+		assert.isTrue(actual instanceof MyService);
+		assert.strictEqual(actual.print(), 'hello');
+	});
+
+	test('can resolve a lazy wrapper for a wrapped key', () => {
+		const tiny = new Tiny();
+		const messageKey = createKey<string>('message');
+		tiny.addInstance(messageKey, 'hello');
+
+		const lazyMessage = tiny.get(createLazyKey(messageKey));
+
+		assert.strictEqual(lazyMessage.get(), 'hello');
+	});
+
+	test('findRegistration and has use the inner lazy key', () => {
+		class MyService {}
+
+		const tiny = new Tiny();
+		tiny.addClass(MyService, []);
+
+		const lazyKey = createLazyKey(MyService);
+		const registration = tiny.findRegistration(lazyKey);
+
+		assert.ok(registration);
+		assert.isTrue(tiny.has(lazyKey));
+	});
+
+	test('returns undefined and throws for missing lazy keys', () => {
+		class MissingService {}
+
+		const tiny = new Tiny();
+		const lazyKey = createLazyKey(MissingService);
+
+		assert.isUndefined(tiny.getSafe(lazyKey));
+		assert.isFalse(tiny.has(lazyKey));
+		assert.throws(() => tiny.get(lazyKey), ComponentNotFoundError);
+	});
+
+	test('lazy wrapper preserves transient lifetime semantics', () => {
+		class MyService {
+			constructor(public id: number) {}
+		}
+
+		const tiny = new Tiny();
+		let created = 0;
+		tiny.addFactory(MyService, () => {
+			created += 1;
+			return new MyService(created);
+		}).transient();
+
+		const lazyService = tiny.get(createLazyKey(MyService));
+		const first = lazyService.get();
+		const second = lazyService.get();
+
+		assert.notStrictEqual(first, second);
+		assert.strictEqual(first.id, 1);
+		assert.strictEqual(second.id, 2);
+	});
+
+	test('lazy wrapper preserves scoped and singleton lifetime semantics', () => {
+		class ScopedService {
+			constructor(public id: number) {}
+		}
+
+		class SingletonService {
+			constructor(public id: number) {}
+		}
+
+		const tiny = new Tiny();
+		let scopedCreated = 0;
+		let singletonCreated = 0;
+
+		tiny.addScopedFactory(ScopedService, () => {
+			scopedCreated += 1;
+			return new ScopedService(scopedCreated);
+		});
+
+		tiny.addSingletonFactory(SingletonService, () => {
+			singletonCreated += 1;
+			return new SingletonService(singletonCreated);
+		});
+
+		const rootScopedLazy = tiny.get(createLazyKey(ScopedService));
+		const rootSingletonLazy = tiny.get(createLazyKey(SingletonService));
+		const scope = tiny.createScope();
+		const scopedScopedLazy = scope.get(createLazyKey(ScopedService));
+		const scopedSingletonLazy = scope.get(createLazyKey(SingletonService));
+
+		assert.strictEqual(rootScopedLazy.get(), rootScopedLazy.get());
+		assert.strictEqual(scopedScopedLazy.get(), scopedScopedLazy.get());
+		assert.notStrictEqual(rootScopedLazy.get(), scopedScopedLazy.get());
+
+		assert.strictEqual(rootSingletonLazy.get(), scopedSingletonLazy.get());
+		assert.strictEqual(singletonCreated, 1);
+		assert.strictEqual(scopedCreated, 2);
 	});
 });
 

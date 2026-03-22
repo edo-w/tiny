@@ -1,10 +1,10 @@
-import type { RegisterKey, Registration } from './types.js';
+import type { Registration, RegistrationKey } from './types.js';
 
 /**
  * Internal registration store keyed by class or symbol.
  */
 export class Registry {
-	private items: Map<RegisterKey, Registration[]>;
+	private items: Map<RegistrationKey, Registration[]>;
 
 	constructor() {
 		this.items = new Map();
@@ -26,7 +26,7 @@ export class Registry {
 	/**
 	 * Returns the latest registration for a key.
 	 */
-	find(key: RegisterKey): Registration | undefined {
+	find(key: RegistrationKey): Registration | undefined {
 		const list = this.items.get(key);
 		if (!list) {
 			return undefined;
@@ -45,14 +45,14 @@ export class Registry {
 	/**
 	 * Checks whether a key has at least one registration.
 	 */
-	has(key: RegisterKey): boolean {
+	has(key: RegistrationKey): boolean {
 		return !!this.find(key);
 	}
 
 	/**
 	 * Returns all registrations for a key.
 	 */
-	getAll(key: RegisterKey): Registration[] | undefined {
+	getAll(key: RegistrationKey): Registration[] | undefined {
 		const list = this.items.get(key);
 		return list;
 	}

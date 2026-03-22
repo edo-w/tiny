@@ -1,6 +1,14 @@
 import { assert, test } from 'vitest';
-import { WrappedKey } from '#src/types.js';
-import { createKey, getNextRegistrationId, isWrappedKey, resetRegistrationId, unwrapKey } from '#src/uils.js';
+import { LazyKey, WrappedKey } from '#src/types.js';
+import {
+	createKey,
+	createLazyKey,
+	getNextRegistrationId,
+	isLazyKey,
+	isWrappedKey,
+	resetRegistrationId,
+	unwrapKey,
+} from '#src/uils.js';
 
 test('#createKey creates a wrapped key', () => {
 	const key = createKey<string>('mykey');
@@ -14,6 +22,21 @@ test('#isWrappedKey identifies wrapped keys', () => {
 
 	assert.strictEqual(isWrappedKey(wrappedKey), true);
 	assert.strictEqual(isWrappedKey({} as WrappedKey<any>), false);
+});
+
+test('#createLazyKey creates a lazy key', () => {
+	const innerKey = createKey<string>('lazy-string');
+	const lazyKey = createLazyKey(innerKey);
+
+	assert.strictEqual(lazyKey.kind, LazyKey);
+	assert.strictEqual(lazyKey.innerKey, innerKey);
+});
+
+test('#isLazyKey identifies lazy keys', () => {
+	const lazyKey = createLazyKey(createKey<number>('lazy-number'));
+
+	assert.strictEqual(isLazyKey(lazyKey), true);
+	assert.strictEqual(isLazyKey({} as LazyKey<any>), false);
 });
 
 test('#unwrapKey returns symbol for wrapped key', () => {

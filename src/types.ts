@@ -6,6 +6,13 @@ export interface ClassType<T> {
 }
 
 /**
+ * Delays component resolution until `get()` is called.
+ */
+export interface Lazy<TComponent> {
+	get(): TComponent;
+}
+
+/**
  * Maps a class constructor parameter list to DI resolution keys.
  */
 // biome-ignore format: readable
@@ -18,8 +25,8 @@ export type ClassDeps<TClass extends ClassType<any>> = ConstructorParameters<TCl
  */
 export interface TinyContext {
 	has<TComponent>(key: ResolveKey<TComponent>): boolean;
-	getSafe<TComponent>(key: ResolveKey<TComponent>): TComponent | undefined;
-	get<TComponent>(key: ResolveKey<TComponent>): TComponent;
+	getSafe<TKey extends ResolveKey>(key: TKey): ResolveResult<TKey> | undefined;
+	get<TKey extends ResolveKey>(key: TKey): ResolveResult<TKey>;
 }
 
 /**
@@ -32,14 +39,14 @@ export type FactoryFn<TComponent> = (t: TinyContext) => TComponent;
  *
  * Wrapped keys are unwrapped into `symbol` or class values before registration.
  */
-export type RegisterKey = symbol | ClassType<any>;
+export type RegistrationKey = symbol | ClassType<any>;
 
 /**
  * Runtime registration entry stored in the container registry.
  */
 export interface Registration {
 	id: number;
-	key: RegisterKey;
+	key: RegistrationKey;
 	lifetime: Lifetime;
 	factory: FactoryFn<any>;
 }
@@ -48,6 +55,11 @@ export interface Registration {
  * Marker symbol that identifies wrapped typed keys created with `createKey`.
  */
 export const WrappedKey = Symbol('tiny:WrappedKey');
+
+/**
+ * Marker symbol that identifies lazy keys created with `createLazyKey`.
+ */
+export const LazyKey = Symbol('tiny:LazyKey');
 
 /**
  * Strongly-typed key wrapper for non-class registrations.
@@ -60,11 +72,34 @@ export interface WrappedKey<TComponent> {
 }
 
 /**
+ * Resolve key that defers resolution of another key until `get()` is called.
+ */
+export interface LazyKey<TComponent> {
+	kind: typeof LazyKey;
+	name: string;
+	innerKey: ComponentKey<TComponent>;
+}
+
+/**
  * Key used to resolve a component from the container.
  *
- * Can be either a wrapped typed key or a class constructor.
+ * Can be a wrapped typed key, a class constructor, or a lazy wrapper around another resolve key.
  */
-export type ResolveKey<TComponent = any> = WrappedKey<TComponent> | ClassType<TComponent>;
+export type ResolveKey<TComponent = any> = WrappedKey<TComponent> | ClassType<TComponent> | LazyKey<TComponent>;
+
+/**
+ * Key used to register a component in the container.
+ */
+export type ComponentKey<TComponent = any> = WrappedKey<TComponent> | ClassType<TComponent>;
+
+export type ResolveResult<TKey> =
+	TKey extends WrappedKey<infer TComponent>
+		? TComponent
+		: TKey extends ClassType<infer TComponent>
+			? TComponent
+			: TKey extends LazyKey<infer TComponent>
+				? Lazy<TComponent>
+				: never;
 
 /**
  * Controls caching behavior for a registration.
