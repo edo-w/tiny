@@ -1,5 +1,11 @@
 # @edo-w/tiny
 
+## 0.3.0
+
+### Minor Changes
+
+- 15f2fff: Add lazy component resolution from container
+
 ## 0.2.0
 
 ### Minor Changes
