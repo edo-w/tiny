@@ -15,9 +15,13 @@ export interface Lazy<TComponent> {
 /**
  * Maps a class constructor parameter list to DI resolution keys.
  */
+type ResolveDepKey<TComponent> = TComponent extends Lazy<infer TLazyComponent>
+	? LazyKey<TLazyComponent>
+	: ResolveKey<TComponent>;
+
 // biome-ignore format: readable
 export type ClassDeps<TClass extends ClassType<any>> = ConstructorParameters<TClass> extends [...infer Params]
-	? { [K in keyof Params]: ResolveKey<Params[K]> }
+	? { [K in keyof Params]: ResolveDepKey<Params[K]> }
 	: never;
 
 /**

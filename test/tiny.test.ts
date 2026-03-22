@@ -104,7 +104,8 @@ suite('lazy', () => {
 		const tiny = new Tiny();
 		tiny.addClass(MyService, []);
 
-		const lazyService = tiny.get(createLazyKey(MyService));
+		const lazyServiceKey = createLazyKey(MyService);
+		const lazyService = tiny.get(lazyServiceKey);
 		const actual = lazyService.get();
 
 		assert.isTrue(actual instanceof MyService);
@@ -116,7 +117,8 @@ suite('lazy', () => {
 		const messageKey = createKey<string>('message');
 		tiny.addInstance(messageKey, 'hello');
 
-		const lazyMessage = tiny.get(createLazyKey(messageKey));
+		const lazyMessageKey = createLazyKey(messageKey);
+		const lazyMessage = tiny.get(lazyMessageKey);
 
 		assert.strictEqual(lazyMessage.get(), 'hello');
 	});
@@ -157,7 +159,8 @@ suite('lazy', () => {
 			return new MyService(created);
 		}).transient();
 
-		const lazyService = tiny.get(createLazyKey(MyService));
+		const lazyServiceKey = createLazyKey(MyService);
+		const lazyService = tiny.get(lazyServiceKey);
 		const first = lazyService.get();
 		const second = lazyService.get();
 
@@ -189,11 +192,13 @@ suite('lazy', () => {
 			return new SingletonService(singletonCreated);
 		});
 
-		const rootScopedLazy = tiny.get(createLazyKey(ScopedService));
-		const rootSingletonLazy = tiny.get(createLazyKey(SingletonService));
+		const scopedServiceLazyKey = createLazyKey(ScopedService);
+		const singletonServiceLazyKey = createLazyKey(SingletonService);
+		const rootScopedLazy = tiny.get(scopedServiceLazyKey);
+		const rootSingletonLazy = tiny.get(singletonServiceLazyKey);
 		const scope = tiny.createScope();
-		const scopedScopedLazy = scope.get(createLazyKey(ScopedService));
-		const scopedSingletonLazy = scope.get(createLazyKey(SingletonService));
+		const scopedScopedLazy = scope.get(scopedServiceLazyKey);
+		const scopedSingletonLazy = scope.get(singletonServiceLazyKey);
 
 		assert.strictEqual(rootScopedLazy.get(), rootScopedLazy.get());
 		assert.strictEqual(scopedScopedLazy.get(), scopedScopedLazy.get());
@@ -202,6 +207,51 @@ suite('lazy', () => {
 		assert.strictEqual(rootSingletonLazy.get(), scopedSingletonLazy.get());
 		assert.strictEqual(singletonCreated, 1);
 		assert.strictEqual(scopedCreated, 2);
+	});
+
+	test('can use a lazy key in constructor dependencies', () => {
+		class MyRepo {
+			constructor(public name: string) {}
+		}
+
+		class UserService {
+			constructor(public repo: import('#src/types.js').Lazy<MyRepo>) {}
+		}
+
+		const tiny = new Tiny();
+		const lazyRepoKey = createLazyKey(MyRepo);
+		tiny.addFactory(MyRepo, () => new MyRepo('repo-1'));
+		tiny.addClass(UserService, [lazyRepoKey]);
+
+		const service = tiny.get(UserService);
+		const repo = service.repo.get();
+
+		assert.isTrue(service instanceof UserService);
+		assert.isTrue(repo instanceof MyRepo);
+		assert.strictEqual(repo.name, 'repo-1');
+	});
+
+	test('can use a lazy key with property injection', () => {
+		class MyRepo {
+			constructor(public name: string) {}
+		}
+
+		class UserService {
+			private static readonly repoKey = createLazyKey(MyRepo);
+
+			repo = inject(UserService.repoKey);
+		}
+
+		const tiny = new Tiny();
+		tiny.addFactory(MyRepo, () => new MyRepo('repo-2'));
+		tiny.addClass(UserService, []);
+
+		const service = tiny.get(UserService);
+		const repo = service.repo.get();
+
+		assert.isTrue(service instanceof UserService);
+		assert.isTrue(repo instanceof MyRepo);
+		assert.strictEqual(repo.name, 'repo-2');
 	});
 });
 
